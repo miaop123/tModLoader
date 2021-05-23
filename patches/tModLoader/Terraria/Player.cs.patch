@@ -175,7 +175,7 @@
 +			if ((callUseItem ?? ItemTimeIsZero) && ItemLoader.UseItem(sItem, this) == false)
 +				return;
 +			
-+			SetItemTime(CombinedHooks.TotalUseTime((int)(sItem.useTime * multiplier), this, sItem));
++			SetItemTime(CombinedHooks.TotalUseTime(sItem.useTime * multiplier, this, sItem));
  		}
  
  		public void SetDummyItemTime(int frames) {
@@ -3588,7 +3588,7 @@
  						ApplyItemTime(item);
  					}
 -					else if (itemTime == item.useTime / 2) {
-+					else if (itemTime == CombinedHooks.TotalUseTime(item.useTime, this, item) / 2) {
++					else if (itemTime == itemTimeMax / 2) {
  						for (int k = 0; k < 70; k++) {
  							Dust.NewDust(base.position, width, height, 15, velocity.X * 0.5f, velocity.Y * 0.5f, 150, default(Color), 1.5f);
  						}
@@ -3638,7 +3638,7 @@
  
  				if (i == Main.myPlayer) {
 -					if (!dontConsumeWand && itemTime == (int)((float)item.useTime * tileSpeed) && item.tileWand > 0) {
-+					if (item.tileWand > 0 && !dontConsumeWand && itemTime == CombinedHooks.TotalUseTime(item.useTime * tileSpeed, this, item)) {
++					if (item.tileWand > 0 && !dontConsumeWand && itemTime == itemTimeMax) {
  						int tileWand = item.tileWand;
  						for (int num15 = 0; num15 < 58; num15++) {
  							if (tileWand == inventory[num15].type && inventory[num15].stack > 0) {
@@ -4189,11 +4189,11 @@
  				flag2 = true;
  
 -			if (sItem.type == 434 && itemAnimation < sItem.useAnimation - 2)
-+			if (sItem.type == 434 && itemAnimation < CombinedHooks.TotalAnimationTime(sItem.useAnimation, this, sItem))
++			if (sItem.type == 434 && itemAnimation < itemAnimationMax)
  				flag2 = true;
  
 -			if (sItem.type == 4953 && itemAnimation > sItem.useAnimation - 8)
-+			if (sItem.type == 4953 && itemAnimation < CombinedHooks.TotalAnimationTime(sItem.useAnimation, this, sItem))
++			if (sItem.type == 4953 && itemAnimation < itemAnimationMax)
  				flag2 = true;
  
  			if (huntressAmmoCost90 && Main.rand.Next(10) == 0)
