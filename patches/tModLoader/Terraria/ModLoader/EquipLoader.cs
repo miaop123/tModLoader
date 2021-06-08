@@ -29,10 +29,6 @@ namespace Terraria.ModLoader
 		internal static readonly IDictionary<EquipType, IDictionary<int, int>> slotToId =
 			new Dictionary<EquipType, IDictionary<int, int>>();
 
-		//slot id -> texture name for body slot female/arm textures
-		internal static readonly IDictionary<int, string> femaleTextures = new Dictionary<int, string>();
-		internal static readonly IDictionary<int, string> armTextures = new Dictionary<int, string>();
-
 		public static readonly EquipType[] EquipTypes = (EquipType[])Enum.GetValues(typeof(EquipType));
 
 		static EquipLoader() {
@@ -42,11 +38,20 @@ namespace Terraria.ModLoader
 			}
 
 			slotToId[EquipType.Head] = new Dictionary<int, int>();
+			slotToId[EquipType.BodyLegacy] = new Dictionary<int, int>();
 			slotToId[EquipType.Body] = new Dictionary<int, int>();
 			slotToId[EquipType.Legs] = new Dictionary<int, int>();
 		}
 
-		internal static int ReserveEquipID(EquipType type) => nextEquip[type]++;
+		internal static int ReserveEquipID(EquipType type)
+		{
+			if (type == EquipType.BodyLegacy || type == EquipType.Body)
+			{
+				nextEquip[EquipType.Body]++;
+				return nextEquip[EquipType.BodyLegacy]++;
+			}
+			return nextEquip[type]++;
+		}
 
 		/// <summary>
 		/// Gets the equipment texture for the specified equipment type and ID.
@@ -61,12 +66,15 @@ namespace Terraria.ModLoader
 		internal static void ResizeAndFillArrays() {
 			//Textures
 			Array.Resize(ref TextureAssets.ArmorHead, nextEquip[EquipType.Head]);
-			Array.Resize(ref TextureAssets.ArmorBody, nextEquip[EquipType.Body]);
-			Array.Resize(ref TextureAssets.FemaleBody, nextEquip[EquipType.Body]);
-			Array.Resize(ref TextureAssets.ArmorArm, nextEquip[EquipType.Body]);
+			Array.Resize(ref TextureAssets.ArmorBody, nextEquip[EquipType.BodyLegacy]);
+			Array.Resize(ref TextureAssets.ArmorBodyComposite, nextEquip[EquipType.Body]);
+			Array.Resize(ref TextureAssets.FemaleBody, nextEquip[EquipType.BodyLegacy]);
+			Array.Resize(ref TextureAssets.ArmorArm, nextEquip[EquipType.BodyLegacy]);
 			Array.Resize(ref TextureAssets.ArmorLeg, nextEquip[EquipType.Legs]);
-			Array.Resize(ref TextureAssets.AccHandsOn, nextEquip[EquipType.HandsOn]);
-			Array.Resize(ref TextureAssets.AccHandsOff, nextEquip[EquipType.HandsOff]);
+			Array.Resize(ref TextureAssets.AccHandsOn, nextEquip[EquipType.HandsOnLegacy]);
+			Array.Resize(ref TextureAssets.AccHandsOnComposite, nextEquip[EquipType.HandsOn]);
+			Array.Resize(ref TextureAssets.AccHandsOff, nextEquip[EquipType.HandsOffLegacy]);
+			Array.Resize(ref TextureAssets.AccHandsOffComposite, nextEquip[EquipType.HandsOff]);
 			Array.Resize(ref TextureAssets.AccBack, nextEquip[EquipType.Back]);
 			Array.Resize(ref TextureAssets.AccFront, nextEquip[EquipType.Front]);
 			Array.Resize(ref TextureAssets.AccShoes, nextEquip[EquipType.Shoes]);
@@ -84,13 +92,24 @@ namespace Terraria.ModLoader
 			foreach (EquipType type in EquipTypes) {
 				foreach (var entry in equipTextures[type]) {
 					int slot = entry.Key;
-					EquipTexture texture = entry.Value;
+					EquipTexture equipTexture = entry.Value;
+					string texture = equipTexture.Texture;
 					
-					GetTextureArray(type)[slot] = ModContent.GetTexture(texture.Texture);
+					GetTextureArray(type)[slot] = ModContent.GetTexture(texture);
 
+					if (type == EquipType.BodyLegacy) {
+						TextureAssets.FemaleBody[slot] = ModContent.TextureExists(texture + "_Female") ? ModContent.GetTexture(texture + "_Female") : ModContent.GetTexture(texture);
+						TextureAssets.ArmorArm[slot] = ModContent.GetTexture(texture + "_Arms");
+					}
+					
 					if (type == EquipType.Body) {
-						TextureAssets.FemaleBody[slot] = ModContent.GetTexture(femaleTextures[slot]);
-						TextureAssets.ArmorArm[slot] = ModContent.GetTexture(armTextures[slot]);
+						ArmorIDs.Body.Sets.UsesNewFramingCode[slot] = true;
+					}
+					else if (type == EquipType.HandsOn) {
+						ArmorIDs.HandOn.Sets.UsesNewFramingCode[slot] = true;
+					}
+					else if (type == EquipType.HandsOff) {
+						ArmorIDs.HandOff.Sets.UsesNewFramingCode[slot] = true;
 					}
 				}
 			}
@@ -101,8 +120,12 @@ namespace Terraria.ModLoader
 				Item.headType[entry.Key] = entry.Value;
 			}
 
-			Array.Resize(ref Item.bodyType, nextEquip[EquipType.Body]);
+			Array.Resize(ref Item.bodyType, nextEquip[EquipType.BodyLegacy]);
 
+			foreach (var entry in slotToId[EquipType.BodyLegacy]) {
+				Item.bodyType[entry.Key] = entry.Value;
+			}
+			
 			foreach (var entry in slotToId[EquipType.Body]) {
 				Item.bodyType[entry.Key] = entry.Value;
 			}
@@ -122,22 +145,24 @@ namespace Terraria.ModLoader
 
 			idToSlot.Clear();
 			slotToId[EquipType.Head].Clear();
+			slotToId[EquipType.BodyLegacy].Clear();
 			slotToId[EquipType.Body].Clear();
 			slotToId[EquipType.Legs].Clear();
-			femaleTextures.Clear();
-			armTextures.Clear();
 		}
 
 		internal static int GetNumVanilla(EquipType type) {
 			switch (type) {
 				case EquipType.Head:
 					return Main.numArmorHead;
+				case EquipType.BodyLegacy:
 				case EquipType.Body:
 					return Main.numArmorBody;
 				case EquipType.Legs:
 					return Main.numArmorLegs;
+				case EquipType.HandsOnLegacy:
 				case EquipType.HandsOn:
 					return Main.numAccHandsOn;
+				case EquipType.HandsOffLegacy:
 				case EquipType.HandsOff:
 					return Main.numAccHandsOff;
 				case EquipType.Back:
@@ -166,12 +191,16 @@ namespace Terraria.ModLoader
 			switch (type) {
 				case EquipType.Head:
 					return TextureAssets.ArmorHead;
-				case EquipType.Body:
+				case EquipType.BodyLegacy:
 					return TextureAssets.ArmorBody;
+				case EquipType.Body:
+					return TextureAssets.ArmorBodyComposite;
 				case EquipType.Legs:
 					return TextureAssets.ArmorLeg;
+				case EquipType.HandsOnLegacy:
 				case EquipType.HandsOn:
 					return TextureAssets.AccHandsOn;
+				case EquipType.HandsOffLegacy:
 				case EquipType.HandsOff:
 					return TextureAssets.AccHandsOff;
 				case EquipType.Back:
@@ -209,15 +238,18 @@ namespace Terraria.ModLoader
 					case EquipType.Head:
 						item.headSlot = slot;
 						break;
+					case EquipType.BodyLegacy:
 					case EquipType.Body:
 						item.bodySlot = slot;
 						break;
 					case EquipType.Legs:
 						item.legSlot = slot;
 						break;
+					case EquipType.HandsOnLegacy:
 					case EquipType.HandsOn:
 						item.handOnSlot = (sbyte)slot;
 						break;
+					case EquipType.HandsOffLegacy:
 					case EquipType.HandsOff:
 						item.handOffSlot = (sbyte)slot;
 						break;
@@ -256,12 +288,15 @@ namespace Terraria.ModLoader
 			switch (type) {
 				case EquipType.Head:
 					return player.head;
+				case EquipType.BodyLegacy:
 				case EquipType.Body:
 					return player.body;
 				case EquipType.Legs:
 					return player.legs;
+				case EquipType.HandsOnLegacy:
 				case EquipType.HandsOn:
 					return player.handon;
+				case EquipType.HandsOffLegacy:
 				case EquipType.HandsOff:
 					return player.handoff;
 				case EquipType.Back:
