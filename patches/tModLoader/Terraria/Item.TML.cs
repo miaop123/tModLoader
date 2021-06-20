@@ -51,31 +51,6 @@ namespace Terraria
 
 		public TagCompound SerializeData() => ItemIO.Save(this);
 
-		internal static void PopulateMaterialCache() {
-			for (int i = 0; i < Recipe.numRecipes; i++) {
-				foreach (Item item in Main.recipe[i].requiredItem) {
-					ItemID.Sets.IsAMaterial[item.type] = true;
-				}
-			}
-
-			foreach (RecipeGroup recipeGroup in RecipeGroup.recipeGroups.Values) {
-				foreach (var item in recipeGroup.ValidItems) {
-					ItemID.Sets.IsAMaterial[item] = true;
-				}
-			}
-
-			ItemID.Sets.IsAMaterial[71] = false;
-			ItemID.Sets.IsAMaterial[72] = false;
-			ItemID.Sets.IsAMaterial[73] = false;
-			ItemID.Sets.IsAMaterial[74] = false;
-		}
-
-		public static int NewItem(Rectangle rectangle, int Type, int Stack = 1, bool noBroadcast = false, int prefixGiven = 0, bool noGrabDelay = false, bool reverseLookup = false)
-			=> Item.NewItem(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, Type, Stack, noBroadcast, prefixGiven, noGrabDelay, reverseLookup);
-
-		public static int NewItem(Vector2 position, int Type, int Stack = 1, bool noBroadcast = false, int prefixGiven = 0, bool noGrabDelay = false, bool reverseLookup = false)
-			=> NewItem((int)position.X, (int)position.Y, 0, 0, Type, Stack, noBroadcast, prefixGiven, noGrabDelay, reverseLookup);
-
 		public bool CountsAsClass<T>() where T : DamageClass
 			=> CountsAsClass(ModContent.GetInstance<T>());
 
@@ -96,6 +71,45 @@ namespace Terraria
 		private void UndoItemAnimationCompensations() {
 			useAnimation -= currentUseAnimationCompensation;
 			currentUseAnimationCompensation = 0;
+		}
+
+		internal static void PopulateMaterialCache() {
+			for (int i = 0; i < Recipe.numRecipes; i++) {
+				foreach (Item item in Main.recipe[i].requiredItem) {
+					ItemID.Sets.IsAMaterial[item.type] = true;
+				}
+			}
+
+			foreach (RecipeGroup recipeGroup in RecipeGroup.recipeGroups.Values) {
+				foreach (var item in recipeGroup.ValidItems) {
+					ItemID.Sets.IsAMaterial[item] = true;
+				}
+			}
+
+			ItemID.Sets.IsAMaterial[71] = false;
+			ItemID.Sets.IsAMaterial[72] = false;
+			ItemID.Sets.IsAMaterial[73] = false;
+			ItemID.Sets.IsAMaterial[74] = false;
+		}
+
+		public static int NewItem(Rectangle rectangle, int Type, int Stack = 1, bool noBroadcast = false, int prefixGiven = 0, bool noGrabDelay = false, bool reverseLookup = false)
+			=> NewItem(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, Type, Stack, noBroadcast, prefixGiven, noGrabDelay, reverseLookup);
+
+		public static int NewItem(Vector2 position, int Type, int Stack = 1, bool noBroadcast = false, int prefixGiven = 0, bool noGrabDelay = false, bool reverseLookup = false)
+			=> NewItem((int)position.X, (int)position.Y, 0, 0, Type, Stack, noBroadcast, prefixGiven, noGrabDelay, reverseLookup);
+
+		// Internal utility methods below. Move somewhere, if there's a better place.
+
+		internal static void DropItem(Item item, Rectangle rectangle) {
+			int droppedItemId = NewItem(rectangle, item.netID, 1, noBroadcast: true, prefixGiven: item.prefix);
+			var droppedItem = Main.item[droppedItemId];
+
+			droppedItem.ModItem = item.ModItem;
+			droppedItem.globalItems = item.globalItems;
+
+			if (Main.netMode == NetmodeID.Server)
+				NetMessage.SendData(21, -1, -1, null, droppedItemId);
+
 		}
 	}
 }
