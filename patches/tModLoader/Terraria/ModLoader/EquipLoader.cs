@@ -110,7 +110,7 @@ namespace Terraria.ModLoader
 					if (type == EquipType.BodyLegacy) {
 						string femaleTexturePath = texture + "_Female";
 
-						TextureAssets.FemaleBody[slot] = ModContent.Request<Texture2D>(ModContent.TextureExists(femaleTexturePath) ? femaleTexturePath : texture, AssetRequestMode.AsyncLoad);
+						TextureAssets.FemaleBody[slot] = ModContent.Request<Texture2D>(ModContent.FileExists(femaleTexturePath) ? femaleTexturePath : texture, AssetRequestMode.AsyncLoad);
 						TextureAssets.ArmorArm[slot] = ModContent.Request<Texture2D>(texture + "_Arms", AssetRequestMode.AsyncLoad);
 					}
 					
