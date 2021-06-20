@@ -1,6 +1,7 @@
 ﻿using ExampleMod.Content.TileEntities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.Enums;
@@ -16,7 +17,7 @@ namespace ExampleMod.Content.Tiles
 		private static Texture2D Mask;
 
 		static AutoClentaminator() {
-			Mask = ModContent.GetTexture(ExampleMod.AssetPath + "Textures/AutoClentaminator_Mask").Value;
+			Mask = ModContent.Request<Texture2D>(ExampleMod.AssetPath + "Textures/AutoClentaminator_Mask", AssetRequestMode.ImmediateLoad).Value;
 
 			Color[] buffer = new Color[Mask.Width * Mask.Height];
 			Mask.GetData(buffer);

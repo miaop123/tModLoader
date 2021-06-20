@@ -105,13 +105,13 @@ namespace Terraria.ModLoader
 					EquipTexture equipTexture = entry.Value;
 					string texture = equipTexture.Texture;
 					
-					GetTextureArray(type)[slot] = ModContent.GetTexture(texture);
+					GetTextureArray(type)[slot] = ModContent.Request<Texture2D>(texture, AssetRequestMode.AsyncLoad);
 
 					if (type == EquipType.BodyLegacy) {
 						string femaleTexturePath = texture + "_Female";
 
-						TextureAssets.FemaleBody[slot] = ModContent.TextureExists(femaleTexturePath) ? ModContent.GetTexture(femaleTexturePath) : ModContent.GetTexture(texture);
-						TextureAssets.ArmorArm[slot] = ModContent.GetTexture(texture + "_Arms");
+						TextureAssets.FemaleBody[slot] = ModContent.Request<Texture2D>(ModContent.TextureExists(femaleTexturePath) ? femaleTexturePath : texture, AssetRequestMode.AsyncLoad);
+						TextureAssets.ArmorArm[slot] = ModContent.Request<Texture2D>(texture + "_Arms", AssetRequestMode.AsyncLoad);
 					}
 					
 					if (type == EquipType.Body) {
