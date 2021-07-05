@@ -266,7 +266,7 @@
  
  				if (num2 != 1f && Math.Round((float)damage * num2) == (double)damage) {
  					flag = true;
-@@ -1038,21 +_,35 @@
+@@ -1038,11 +_,19 @@
  					num = -1;
  				}
  
@@ -286,14 +286,11 @@
  
  			damage = (int)Math.Round((float)damage * num2);
  			useAnimation = (int)Math.Round((float)useAnimation * num4);
- 			useTime = (int)Math.Round((float)useTime * num4);
- 			reuseDelay = (int)Math.Round((float)reuseDelay * num4);
- 			mana = (int)Math.Round((float)mana * num7);
-+			//Patch context.
- 			knockBack *= num3;
+@@ -1053,6 +_,12 @@
  			scale *= num5;
  			shootSpeed *= num6;
  			crit += num8;
++
 +			if (num >= PrefixID.Count)
 +				PrefixLoader.GetPrefix(num)?.Apply(this);
 +
