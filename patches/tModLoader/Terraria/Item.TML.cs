@@ -57,22 +57,6 @@ namespace Terraria
 		public bool CountsAsClass(DamageClass damageClass)
 			=> DamageClassLoader.countsAs[DamageType.Type, damageClass.Type];
 
-		private void ApplyItemAnimationCompensations() {
-			// Compensate for the change of itemAnimation getting reset at 0 instead of vanilla's 1.
-
-			currentUseAnimationCompensation = 0;
-
-			if (type < ItemID.Count && !noMelee) {
-				useAnimation++;
-				currentUseAnimationCompensation++;
-			}
-		}
-
-		private void UndoItemAnimationCompensations() {
-			useAnimation -= currentUseAnimationCompensation;
-			currentUseAnimationCompensation = 0;
-		}
-
 		internal static void PopulateMaterialCache() {
 			for (int i = 0; i < Recipe.numRecipes; i++) {
 				foreach (Item item in Main.recipe[i].requiredItem) {
@@ -97,6 +81,22 @@ namespace Terraria
 
 		public static int NewItem(Vector2 position, int Type, int Stack = 1, bool noBroadcast = false, int prefixGiven = 0, bool noGrabDelay = false, bool reverseLookup = false)
 			=> NewItem((int)position.X, (int)position.Y, 0, 0, Type, Stack, noBroadcast, prefixGiven, noGrabDelay, reverseLookup);
+
+		private void ApplyItemAnimationCompensations() {
+			// Compensate for the change of itemAnimation getting reset at 0 instead of vanilla's 1.
+
+			currentUseAnimationCompensation = 0;
+
+			if (type < ItemID.Count && !noMelee) {
+				useAnimation--;
+				currentUseAnimationCompensation--;
+			}
+		}
+
+		private void UndoItemAnimationCompensations() {
+			useAnimation -= currentUseAnimationCompensation;
+			currentUseAnimationCompensation = 0;
+		}
 
 		// Internal utility methods below. Move somewhere, if there's a better place.
 
