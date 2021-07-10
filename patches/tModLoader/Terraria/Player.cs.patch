@@ -2332,16 +2332,6 @@
  				if (!Falling) {
  					float num3 = Math.Abs(velocity.X) / 3f;
  					if ((float)Main.rand.Next(100) > num3 * 100f)
-@@ -16811,6 +_,9 @@
- 		}
- 
- 		public void Update(int i) {
-+			ItemTimePrev = itemTime;
-+			ItemAnimationPrev = itemAnimation;
-+
- 			if (i == Main.myPlayer && Main.netMode != 2)
- 				LockOnHelper.Update();
- 
 @@ -16961,6 +_,7 @@
  
  			UpdateHairDyeDust();
@@ -3234,6 +3224,15 @@
  			int num = 50;
  			if (newItem.IsACoin)
  				num = 54;
+@@ -27653,6 +_,8 @@
+ 				return;
+ 
+ 			bool flag = true;
++			flag &= WallLoader.CanPlace(tileTargetX, tileTargetY, inventory[selectedItem].createWall);
++
+ 			if (TileReplacementEnabled)
+ 				flag = PlaceThing_TryReplacingWalls(flag);
+ 
 @@ -27661,6 +_,7 @@
  
  			WorldGen.PlaceWall(tileTargetX, tileTargetY, inventory[selectedItem].createWall);
@@ -3273,8 +3272,13 @@
  					PlaceThing_Tiles_BlockPlacementIfOverPlayers(ref canPlace, ref objectData);
  					PlaceThing_Tiles_BlockPlacementForRepeatedPigronatas(ref canPlace, ref objectData);
  					PlaceThing_Tiles_BlockPlacementForRepeatedPumpkins(ref canPlace, ref objectData);
-@@ -27807,7 +_,7 @@
+@@ -27805,9 +_,12 @@
+ 				if (!WorldGen.IsTileReplacable(tileTargetX, tileTargetY))
+ 					return false;
  
++				if (!TileLoader.CanPlace(tileTargetX, tileTargetY, HeldItem.createTile))
++					return false;
++
  				if (0 == 0) {
  					if (hitReplace.AddDamage(num, pickaxeDamage) < 100) {
 -						int num2 = WorldGen.KillTile_GetTileDustAmount(fail: true, tile);
@@ -3855,6 +3859,15 @@
  						if (tile.halfBrick()) {
  							WorldGen.PoundTile(x, y);
  							if (Main.netMode == 1)
+@@ -32023,7 +_,7 @@
+ 			}
+ 		}
+ 
+-		private bool IsTargetTileInItemRange(Item sItem) {
++		public bool IsTargetTileInItemRange(Item sItem) {
+ 			if (position.X / 16f - (float)tileRangeX - (float)sItem.tileBoost <= (float)tileTargetX && (position.X + (float)width) / 16f + (float)tileRangeX + (float)sItem.tileBoost - 1f >= (float)tileTargetX && position.Y / 16f - (float)tileRangeY - (float)sItem.tileBoost <= (float)tileTargetY)
+ 				return (position.Y + (float)height) / 16f + (float)tileRangeY + (float)sItem.tileBoost - 2f >= (float)tileTargetY;
+ 
 @@ -32366,7 +_,8 @@
  				}
  
@@ -3985,6 +3998,15 @@
  				itemRotation = 0f;
  				NetMessage.SendData(41, -1, -1, null, whoAmI);
  			}
+@@ -33994,7 +_,7 @@
+ 			return startPos;
+ 		}
+ 
+-		private int SpawnMinionOnCursor(IProjectileSource projectileSource, int ownerIndex, int minionProjectileId, int originalDamageNotScaledByMinionDamage, float KnockBack, Vector2 offsetFromCursor = default(Vector2), Vector2 velocityOnSpawn = default(Vector2)) {
++		public int SpawnMinionOnCursor(IProjectileSource projectileSource, int ownerIndex, int minionProjectileId, int originalDamageNotScaledByMinionDamage, float KnockBack, Vector2 offsetFromCursor = default(Vector2), Vector2 velocityOnSpawn = default(Vector2)) {
+ 			Vector2 pointPoisition = Main.MouseWorld;
+ 			pointPoisition += offsetFromCursor;
+ 			LimitPointToPlayerReachableArea(ref pointPoisition);
 @@ -34164,6 +_,11 @@
  		private void ItemCheck_MinionAltFeatureUse(Item sItem, bool cShoot) {
  			if (sItem.shoot > 0 && ProjectileID.Sets.MinionTargettingFeature[sItem.shoot] && altFunctionUse == 2 && cShoot && ItemTimeIsZero) {
@@ -4245,20 +4267,36 @@
  			bool flag2 = dontConsume;
  			if (sItem.type == 3475 && Main.rand.Next(3) != 0)
  				flag2 = true;
-@@ -36627,10 +_,10 @@
+@@ -36627,10 +_,15 @@
  			if (sItem.type == 1553 && Main.rand.Next(3) != 0)
  				flag2 = true;
  
++			// Clockwork Assault Rifle.
++			// The offset of '-2' doesn't quite matter. The goal is to only use ammo on the first shot.
 -			if (sItem.type == 434 && itemAnimation < sItem.useAnimation - 2)
++			//if (sItem.type == 434 && itemAnimation < sItem.useAnimation - 2)
 +			if (sItem.type == 434 && itemAnimation < itemAnimationMax)
  				flag2 = true;
  
++			// Same as above.
 -			if (sItem.type == 4953 && itemAnimation > sItem.useAnimation - 8)
++			//if (sItem.type == 4953 && itemAnimation > sItem.useAnimation - 8)
 +			if (sItem.type == 4953 && itemAnimation < itemAnimationMax)
  				flag2 = true;
  
  			if (huntressAmmoCost90 && Main.rand.Next(10) == 0)
-@@ -36651,7 +_,10 @@
+@@ -36645,13 +_,20 @@
+ 			if (ammoCost75 && Main.rand.Next(4) == 0)
+ 				flag2 = true;
+ 
++			// Flamethrower.
++			// Unlike with Clockwork Assault Rifle, here we want to keep the feature-bug of Unreal modifier flamethrowers consuming 2 gel instead of 1 per click (less when holding.)
++			// So we just adjust the offset to be in-line with itemAnim changes.
++			//if (projToShoot == 85 && itemAnimation < itemAnimationMax - 6)
+-			if (projToShoot == 85 && itemAnimation < itemAnimationMax - 6)
++			if (projToShoot == 85 && itemAnimation < itemAnimationMax - 5)
+ 				flag2 = true;
+ 
  			if ((projToShoot == 145 || projToShoot == 146 || projToShoot == 147 || projToShoot == 148 || projToShoot == 149) && itemAnimation < itemAnimationMax - 5)
  				flag2 = true;
  
